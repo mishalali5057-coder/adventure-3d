@@ -15,6 +15,10 @@
 #knob{position:absolute;width:54px;height:54px;border-radius:50%;background:#fff9;border:2px solid white;left:37px;top:37px}
 #buttons{display:grid;grid-template-columns:repeat(2,66px);gap:8px;pointer-events:auto}
 button{border:1px solid #ffffff99;background:#102b43dd;color:white;border-radius:15px;min-height:55px;font-weight:700;font-size:12px;touch-action:none}
+#extras{position:fixed;top:105px;left:10px;display:flex;gap:6px;z-index:5;flex-wrap:wrap;max-width:58%}
+#extras button{min-height:38px;padding:6px 9px;font-size:11px}
+#panel{position:fixed;inset:50% auto auto 50%;transform:translate(-50%,-50%);width:min(340px,90vw);max-height:75vh;overflow:auto;background:#102b43f2;color:white;border:1px solid #ffffff66;border-radius:18px;padding:16px;z-index:10;display:none;box-shadow:0 12px 40px #0008}
+#panel h3{margin:0 0 10px}#panel p{font-size:13px;line-height:1.6}#panel button{width:100%;margin-top:7px;min-height:42px}
 #toast{position:fixed;left:50%;top:44%;transform:translate(-50%,-50%);background:#102b43e8;color:white;padding:12px 18px;border-radius:14px;display:none;text-align:center;max-width:85%;font-weight:700}
 #help{position:fixed;bottom:158px;left:10px;color:white;background:#102b4388;padding:7px 10px;border-radius:10px;font-size:11px;pointer-events:none}
 </style>
@@ -23,6 +27,10 @@ button{border:1px solid #ffffff99;background:#102b43dd;color:white;border-radius
 <div id="game"></div>
 <div id="hud"><div class="panel">💎 البلورات: <span id="count">0</span>/12</div><div class="panel">🏝️ جزيرة المغامرة</div></div>
 <div id="mission">🎯 المهمة: اجمع البلورات الـ12 ثم زر المخيم.</div>
+<div id="extras">
+<button id="shop">🛒 المتجر</button><button id="bag">🎒 الحقيبة</button><button id="world">🌙 ليل/نهار</button><button id="weather">☀️ الطقس</button><button id="home">🏠 دخول بيت</button>
+</div>
+<div id="panel"><h3 id="panelTitle">المتجر</h3><div id="panelBody"></div><button id="closePanel">إغلاق</button></div>
 <div id="help">اسحب العصا للحركة • اقفز • اقترب من السيارة واضغط ركوب</div>
 <div id="controls">
  <div id="stick"><div id="knob"></div></div>
@@ -36,42 +44,52 @@ button{border:1px solid #ffffff99;background:#102b43dd;color:white;border-radius
 import * as THREE from 'https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js';
 const scene=new THREE.Scene(); scene.background=new THREE.Color(0x8bd0ef); scene.fog=new THREE.Fog(0x8bd0ef,65,190);
 const camera=new THREE.PerspectiveCamera(65,innerWidth/innerHeight,.1,300);
-const renderer=new THREE.WebGLRenderer({antialias:true}); renderer.setPixelRatio(Math.min(devicePixelRatio,1.6)); renderer.setSize(innerWidth,innerHeight); renderer.shadowMap.enabled=true; document.querySelector('#game').appendChild(renderer.domElement);
+const renderer=new THREE.WebGLRenderer({antialias:true}); renderer.setPixelRatio(Math.min(devicePixelRatio,1.6)); renderer.setSize(innerWidth,innerHeight); renderer.shadowMap.enabled=true; renderer.shadowMap.type=THREE.PCFSoftShadowMap; document.querySelector('#game').appendChild(renderer.domElement);
 scene.add(new THREE.HemisphereLight(0xffffff,0x59734b,2));
 const sun=new THREE.DirectionalLight(0xffffff,2.2); sun.position.set(-35,55,25); sun.castShadow=true; scene.add(sun);
 const mat=(c)=>new THREE.MeshStandardMaterial({color:c,roughness:.9});
 const grass=mat(0x65a84f), sand=mat(0xe8d49a), wood=mat(0x79502e), leaf=mat(0x287b45), rock=mat(0x777d80), houseMat=mat(0xe6b66d), roofMat=mat(0x9a4937), roadMat=mat(0x62696d);
-const ground=new THREE.Mesh(new THREE.CircleGeometry(95,64),grass); ground.rotation.x=-Math.PI/2; ground.receiveShadow=true; scene.add(ground);
+const ground=new THREE.Mesh(new THREE.CircleGeometry(95,96),grass); ground.rotation.x=-Math.PI/2; ground.receiveShadow=true; ground.position.y=-.04; scene.add(ground);
 const beach=new THREE.Mesh(new THREE.RingGeometry(83,96,64),sand); beach.rotation.x=-Math.PI/2; beach.position.y=.03; scene.add(beach);
 const sea=new THREE.Mesh(new THREE.CircleGeometry(180,64),new THREE.MeshStandardMaterial({color:0x278dbb,roughness:.45})); sea.rotation.x=-Math.PI/2; sea.position.y=-.55; scene.add(sea);
 function box(w,h,d,m,x,y,z){let o=new THREE.Mesh(new THREE.BoxGeometry(w,h,d),m);o.position.set(x,y,z);o.castShadow=true;o.receiveShadow=true;scene.add(o);return o}
-function tree(x,z,s=1){let t=new THREE.Group();let a=new THREE.Mesh(new THREE.CylinderGeometry(.22*s,.32*s,2*s,7),wood);a.position.y=s;a.castShadow=true;t.add(a);let b=new THREE.Mesh(new THREE.ConeGeometry(1.25*s,2.8*s,7),leaf);b.position.y=2.8*s;b.castShadow=true;t.add(b);t.position.set(x,0,z);scene.add(t)}
+function tree(x,z,s=1){let t=new THREE.Group();let a=new THREE.Mesh(new THREE.CylinderGeometry(.22*s,.32*s,2*s,10),wood);a.position.y=s;a.castShadow=true;t.add(a);let b=new THREE.Mesh(new THREE.ConeGeometry(1.25*s,2.8*s,10),leaf);b.position.y=2.8*s;b.castShadow=true;t.add(b);t.position.set(x,0,z);scene.add(t)}
 function house(x,z){box(7,4,6,houseMat,x,2,z);let r=new THREE.Mesh(new THREE.ConeGeometry(5.2,3,4),roofMat);r.position.set(x,5.4,z);r.rotation.y=Math.PI/4;r.castShadow=true;scene.add(r);box(1.25,2.2,.18,wood,x,1.1,z-3.08);box(1.3,1.2,.2,mat(0x8bd6e8),x-2,2.5,z-3.1)}
 // طريق ومخيم
 box(13,.12,2,roadMat,0,.08,0); box(2,.13,30,roadMat,0,.09,12);
 house(-12,-10);house(13,-18);house(22,8);house(-25,18);
 for(let i=0;i<48;i++){let ang=i*2.399,r=23+(i%7)*8,x=Math.cos(ang)*r,z=Math.sin(ang)*r;if(Math.hypot(x,z)<79)tree(x,z,.7+(i%4)*.12)}
-for(let i=0;i<18;i++){let x=(Math.random()-.5)*140,z=(Math.random()-.5)*140;if(Math.hypot(x,z)<80) {let b=new THREE.Mesh(new THREE.DodecahedronGeometry(.8+Math.random()*1.2),rock);b.position.set(x,.6,z);b.castShadow=true;scene.add(b)}}
+for(let i=0;i<18;i++){let x=(Math.random()-.5)*140,z=(Math.random()-.5)*140;if(Math.hypot(x,z)<80) {let size=.8+Math.random()*1.2;let b=new THREE.Mesh(new THREE.DodecahedronGeometry(size,1),rock);b.position.set(x,size*.72-.04,z);b.scale.y=.72;b.castShadow=true;b.receiveShadow=true;scene.add(b)}}
 // لاعب
 const player=new THREE.Group();scene.add(player);
-let body=new THREE.Mesh(new THREE.CapsuleGeometry(.48,.85,4,8),mat(0x2466c2));body.position.y=1.15;body.castShadow=true;player.add(body);
-let head=new THREE.Mesh(new THREE.SphereGeometry(.38,12,10),mat(0xf0c49a));head.position.y=2;player.add(head);
+let body=new THREE.Mesh(new THREE.CapsuleGeometry(.42,.78,6,12),mat(0x2466c2));body.position.y=1.02;body.castShadow=true;player.add(body);
+let head=new THREE.Mesh(new THREE.SphereGeometry(.38,12,10),mat(0xf0c49a));head.position.y=1.82;player.add(head);
 let movingCar=false,car;
 const carBody=mat(0xd94b35),glass=mat(0x9bd8e8),tire=mat(0x222222);
 car=new THREE.Group(); // create local car parts
 function carPart(g,geo,m,x,y,z){let o=new THREE.Mesh(geo,m);o.position.set(x,y,z);o.castShadow=true;g.add(o);return o}
-car.clear();carPart(car,new THREE.BoxGeometry(3.4,.8,5),carBody,0,.8,0);carPart(car,new THREE.BoxGeometry(2.4,1.1,2.5),glass,0,1.65,-.2);
-for(let x of [-1.65,1.65])for(let z of [-1.6,1.6]){let w=carPart(car,new THREE.CylinderGeometry(.48,.48,.35,12),tire,x,.48,z);w.rotation.z=Math.PI/2}
+car.clear();carPart(car,new THREE.BoxGeometry(3.4,.72,5),carBody,0,.72,0);carPart(car,new THREE.BoxGeometry(2.35,1.05,2.45),glass,0,1.55,-.2);
+for(let x of [-1.65,1.65])for(let z of [-1.6,1.6]){let w=carPart(car,new THREE.CylinderGeometry(.52,.52,.38,16),tire,x,.52,z);w.rotation.z=Math.PI/2}
 car.position.set(5,0,4);scene.add(car);
 // بلورات
 const crystals=[];const crystalMat=new THREE.MeshStandardMaterial({color:0x47f2ff,emissive:0x087c9b,metalness:.25,roughness:.25});
-for(let i=0;i<12;i++){let a=i*2.4,r=28+(i%3)*12;let c=new THREE.Mesh(new THREE.OctahedronGeometry(.85),crystalMat);c.position.set(Math.cos(a)*r,1.2,Math.sin(a)*r);c.castShadow=true;scene.add(c);crystals.push(c)}
+for(let i=0;i<12;i++){let a=i*2.4,r=28+(i%3)*12;let c=new THREE.Mesh(new THREE.OctahedronGeometry(.65),crystalMat);c.position.set(Math.cos(a)*r,.68,Math.sin(a)*r);c.castShadow=true;scene.add(c);crystals.push(c)}
 // شخصيات ودّية وعلامات
 const npcMat=mat(0xe8a33b);
 for(let p of [[-18,4],[18,-28],[32,18]]){let n=new THREE.Group();let q=new THREE.Mesh(new THREE.CapsuleGeometry(.42,.8,4,8),npcMat);q.position.y=1;n.add(q);n.position.set(p[0],0,p[1]);scene.add(n)}
 const camp= new THREE.Group();let fire=new THREE.Mesh(new THREE.ConeGeometry(1,2,6),mat(0xff8a24));fire.position.y=1;camp.add(fire);camp.position.set(0,0,-34);scene.add(camp);
-let collected=0,joy={x:0,y:0},velY=0,camTurn=0;const toast=document.querySelector('#toast');
+let collected=0,money=50,inventory=['خريطة الجزيرة'],ownedCars=1,insideHouse=false,night=false,rainy=false,joy={x:0,y:0},velY=0,camTurn=0;const toast=document.querySelector('#toast');
 function say(t){toast.textContent=t;toast.style.display='block';setTimeout(()=>toast.style.display='none',2100)}
+function showPanel(title,html){document.querySelector('#panelTitle').textContent=title;document.querySelector('#panelBody').innerHTML=html;document.querySelector('#panel').style.display='block'}
+document.querySelector('#closePanel').onclick=()=>document.querySelector('#panel').style.display='none';
+document.querySelector('#shop').onclick=()=>showPanel('🛒 متجر الجزيرة',`<p>💰 رصيدك: ${money} قطعة</p><p>🚙 سيارة رياضية — 80 قطعة</p><button id="buyCar">شراء سيارة رياضية (80)</button><p>🎨 لون مميز للسيارة — 25 قطعة</p><button id="buyPaint">شراء لون ذهبي (25)</button><p>كل بلورة تجمعها تمنحك 10 قطع.</p>`);
+document.querySelector('#bag').onclick=()=>showPanel('🎒 حقيبتك',`<p>💰 النقود: ${money}</p><p>💎 البلورات: ${collected}/12</p><p>🚗 السيارات: ${ownedCars}</p><p>الأغراض: ${inventory.join('، ')}</p>`);
+document.querySelector('#buyCar')?.addEventListener('click',()=>{});
+document.querySelector('#world').onclick=()=>{night=!night;scene.background=new THREE.Color(night?0x101c3d:0x8bd0ef);scene.fog.color.set(night?0x101c3d:0x8bd0ef);sun.intensity=night?.45:2.2;say(night?'حلّ الليل على الجزيرة 🌙':'أشرقت الشمس ☀️')};
+document.querySelector('#weather').onclick=()=>{rainy=!rainy;scene.fog.color.set(rainy?0x788b9b:(night?0x101c3d:0x8bd0ef));scene.background=new THREE.Color(rainy?0x788b9b:(night?0x101c3d:0x8bd0ef));say(rainy?'الجو غائم وممطر 🌧️':'عاد الجو صافياً ☀️')};
+document.querySelector('#home').onclick=()=>{if(!insideHouse){let homes=[[-12,-10],[13,-18],[22,8],[-25,18]],nearest=homes.sort((a,b)=>Math.hypot(player.position.x-a[0],player.position.z-a[1])-Math.hypot(player.position.x-b[0],player.position.z-b[1]))[0];if(Math.hypot(player.position.x-nearest[0],player.position.z-nearest[1])>9){say('اقترب من أحد البيوت أولاً');return}player.position.set(nearest[0],0,nearest[1]);insideHouse=true;inventory.push('زيارة بيت');say('دخلت البيت! اضغط زر البيت للخروج')}else{player.position.x+=8;insideHouse=false;say('خرجت إلى الجزيرة')}};
+document.addEventListener('click',e=>{if(e.target.id==='buyCar'){if(money>=80){money-=80;ownedCars++;let extra=car.clone();extra.position.set(-7,0,7);scene.add(extra);inventory.push('سيارة رياضية');e.target.disabled=true;e.target.textContent='تم الشراء ✓';say('اشتريت سيارة جديدة!')}else say('تحتاج 80 قطعة') }if(e.target.id==='buyPaint'){if(money>=25){money-=25;carBody.color.set(0xd9ae35);inventory.push('طلاء ذهبي');e.target.disabled=true;e.target.textContent='تم الشراء ✓';say('تم تغيير لون السيارة')}else say('تحتاج 25 قطعة')}});
+
 const stick=document.querySelector('#stick'),knob=document.querySelector('#knob');let pointer=null;
 stick.addEventListener('pointerdown',e=>{pointer=e.pointerId;stick.setPointerCapture(pointer);moveStick(e)});
 stick.addEventListener('pointermove',e=>{if(e.pointerId===pointer)moveStick(e)});
@@ -84,13 +102,13 @@ document.querySelector('#ride').onclick=()=>{if(!movingCar&&player.position.dist
 document.querySelector('#map').onclick=()=>say(collected<12?`باقي لك ${12-collected} بلورة زرقاء`:'اتجه إلى المخيم عند علامة النار');
 let last=performance.now();
 function animate(now){requestAnimationFrame(animate);let dt=Math.min((now-last)/1000,.04);last=now;
-crystals.forEach(c=>{c.rotation.y+=dt*1.5;c.position.y=1.2+Math.sin(now*.002+c.position.x)*.2});
+crystals.forEach(c=>{c.rotation.y+=dt*.45;c.position.y=.68+Math.sin(now*.002+c.position.x)*.035});
 let target=movingCar?car:player;let speed=movingCar?15:8;let forward=new THREE.Vector3(joy.x,0,joy.y);forward.applyAxisAngle(new THREE.Vector3(0,1,0),camTurn);if(forward.length()>1)forward.normalize();
 if(forward.length()>.05){target.position.x+=forward.x*speed*dt;target.position.z+=forward.z*speed*dt;target.rotation.y=Math.atan2(forward.x,forward.z)}
 target.position.x=THREE.MathUtils.clamp(target.position.x,-88,88);target.position.z=THREE.MathUtils.clamp(target.position.z,-88,88);
 if(!movingCar){velY-=20*dt;player.position.y=Math.max(0,player.position.y+velY*dt);if(player.position.y===0)velY=0;
-for(let i=crystals.length-1;i>=0;i--)if(player.position.distanceTo(crystals[i].position)<2.2){scene.remove(crystals[i]);crystals.splice(i,1);collected++;document.querySelector('#count').textContent=collected;if(collected===12){document.querySelector('#mission').textContent='🏕️ المهمة الأخيرة: زر المخيم عند النار!';say('جمعت كل البلورات! اذهب إلى المخيم')} }}
-if(collected===12&&player.position.distanceTo(camp.position)<5) {document.querySelector('#mission').textContent='🏆 أنهيت مغامرة الجزيرة!';}
+for(let i=crystals.length-1;i>=0;i--)if(player.position.distanceTo(crystals[i].position)<2.2){scene.remove(crystals[i]);crystals.splice(i,1);collected++;money+=10;document.querySelector('#count').textContent=collected;if(collected===12){document.querySelector('#mission').textContent='🏕️ المهمة الأخيرة: زر المخيم عند النار!';say('جمعت كل البلورات! اذهب إلى المخيم')} }}
+if(collected===12&&player.position.distanceTo(camp.position)<5) {document.querySelector('#mission').textContent='🏆 أنهيت مغامرة الجزيرة!';inventory.push('شارة بطل الجزيرة');}
 let focus=target.position;let offset=new THREE.Vector3(Math.sin(camTurn)*10,8,Math.cos(camTurn)*10);let desired=focus.clone().add(offset);camera.position.lerp(desired,.09);camera.lookAt(focus.x,focus.y+1,focus.z);
 renderer.render(scene,camera)}
 requestAnimationFrame(animate);
