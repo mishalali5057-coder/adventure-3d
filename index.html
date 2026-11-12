@@ -1,36 +1,100 @@
 <!doctype html>
-<html lang="ar" dir="rtl"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no"><meta name="theme-color" content="#071b2c"><title>جزيرة المغامرة 3D</title>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
+<title>جزيرة المغامرة 3D</title>
 <style>
-*{box-sizing:border-box}html,body{margin:0;width:100%;height:100%;overflow:hidden;background:#071b2c;color:white;font-family:system-ui,Tahoma;touch-action:none}#game{position:fixed;inset:0}canvas{display:block}#hud{position:fixed;inset:0;padding:13px;pointer-events:none;display:flex;justify-content:space-between;align-items:flex-start}.panel{background:#071b2cbb;border:1px solid #ffffff40;border-radius:15px;padding:10px 13px;backdrop-filter:blur(8px)}.sub{font-size:11px;color:#cde8f0}#score{font-weight:900;color:#ffe08a}.bottom{position:fixed;bottom:15px;left:15px;right:15px;display:flex;justify-content:space-between;align-items:end;pointer-events:none}#stick{width:120px;height:120px;border-radius:50%;background:#dff8ff30;border:2px solid #ffffff80;position:relative;pointer-events:auto}#knob{position:absolute;left:34px;top:34px;width:48px;height:48px;border-radius:50%;background:#e8fbffdd;border:2px solid white}.buttons{display:flex;gap:9px;pointer-events:auto}.action{width:66px;height:66px;border-radius:50%;border:2px solid white;background:#1769c7;color:white;font-weight:bold;touch-action:none}#jump{background:#0e8494}#start{position:fixed;inset:0;z-index:3;background:#061827eF;display:grid;place-items:center;padding:20px}.box{max-width:420px;text-align:center;background:#0c2940;border:1px solid #ffffff40;border-radius:24px;padding:25px}.box h1{font-size:27px;margin:5px}.box p{color:#c5e1eb;line-height:1.7;font-size:14px}#play{width:100%;padding:14px;border:0;border-radius:13px;background:linear-gradient(90deg,#0ea5e9,#2563eb);color:white;font-weight:900;font-size:16px}#msg{position:fixed;top:22%;left:50%;transform:translateX(-50%);background:#071b2cee;border:1px solid #ffffff40;border-radius:13px;padding:10px;opacity:0;transition:.2s;white-space:nowrap}
-</style><script type="importmap">{"imports":{"three":"https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js"}}</script></head>
-<body><div id="game"></div><div id="hud"><div class="panel"><b>🏝️ جزيرة المغامرة</b><div class="sub">استكشف واجمع البلورات</div></div><div class="panel"><div class="sub">البلورات</div><div id="score">💎 0 / 12</div></div></div><div id="msg"></div>
-<div class="bottom"><div><div id="stick"><div id="knob"></div></div><div class="sub">حرّك للمشي</div></div><div class="buttons"><button class="action" id="jump">قفز</button><button class="action" id="turn">تدوير</button></div></div>
-<div id="start"><div class="box"><div style="font-size:48px">🌴</div><h1>جزيرة المغامرة 3D</h1><p>عالم مفتوح صغير! تجوّل بين الأشجار والصخور، اقفز، واجمع 12 بلورة مخفية.</p><p><b>التحكم:</b> عصا الحركة أسفل اليسار، وزر القفز وتدوير الكاميرا.</p><button id="play">ابدأ المغامرة 🚀</button></div></div>
+*{box-sizing:border-box}html,body{margin:0;width:100%;height:100%;overflow:hidden;background:#86c9e8;font-family:system-ui,Arial;touch-action:none}
+#game{position:fixed;inset:0}canvas{display:block}
+#hud{position:fixed;top:10px;right:10px;left:10px;display:flex;justify-content:space-between;gap:8px;pointer-events:none;color:#fff;text-shadow:0 2px 4px #123;font-weight:700}
+.panel{background:#102b43bb;border:1px solid #ffffff55;border-radius:14px;padding:8px 12px;font-size:13px}
+#mission{position:fixed;top:58px;right:10px;max-width:230px;color:white;background:#102b43cc;border-radius:12px;padding:9px 12px;font-size:13px;pointer-events:none}
+#controls{position:fixed;inset:auto 0 14px;display:flex;align-items:end;justify-content:space-between;padding:0 16px;pointer-events:none}
+#stick{width:132px;height:132px;border-radius:50%;background:#102b4355;border:2px solid #ffffff88;position:relative;pointer-events:auto;touch-action:none}
+#knob{position:absolute;width:54px;height:54px;border-radius:50%;background:#fff9;border:2px solid white;left:37px;top:37px}
+#buttons{display:grid;grid-template-columns:repeat(2,66px);gap:8px;pointer-events:auto}
+button{border:1px solid #ffffff99;background:#102b43dd;color:white;border-radius:15px;min-height:55px;font-weight:700;font-size:12px;touch-action:none}
+#toast{position:fixed;left:50%;top:44%;transform:translate(-50%,-50%);background:#102b43e8;color:white;padding:12px 18px;border-radius:14px;display:none;text-align:center;max-width:85%;font-weight:700}
+#help{position:fixed;bottom:158px;left:10px;color:white;background:#102b4388;padding:7px 10px;border-radius:10px;font-size:11px;pointer-events:none}
+</style>
+</head>
+<body>
+<div id="game"></div>
+<div id="hud"><div class="panel">💎 البلورات: <span id="count">0</span>/12</div><div class="panel">🏝️ جزيرة المغامرة</div></div>
+<div id="mission">🎯 المهمة: اجمع البلورات الـ12 ثم زر المخيم.</div>
+<div id="help">اسحب العصا للحركة • اقفز • اقترب من السيارة واضغط ركوب</div>
+<div id="controls">
+ <div id="stick"><div id="knob"></div></div>
+ <div id="buttons">
+  <button id="jump">⬆️ قفز</button><button id="ride">🚗 ركوب</button>
+  <button id="cam">📷 تدوير</button><button id="map">🧭 المهمة</button>
+ </div>
+</div>
+<div id="toast"></div>
 <script type="module">
-import * as THREE from 'three';
-const scene=new THREE.Scene();scene.background=new THREE.Color(0x8bd5ee);scene.fog=new THREE.Fog(0x8bd5ee,45,105);
-const camera=new THREE.PerspectiveCamera(65,innerWidth/innerHeight,.1,200);
-const renderer=new THREE.WebGLRenderer({antialias:true});renderer.setSize(innerWidth,innerHeight);renderer.setPixelRatio(Math.min(devicePixelRatio,1.5));renderer.shadowMap.enabled=true;renderer.toneMapping=THREE.ACESFilmicToneMapping;document.querySelector('#game').appendChild(renderer.domElement);
-scene.add(new THREE.HemisphereLight(0xdaf6ff,0x526b39,2));let sun=new THREE.DirectionalLight(0xffedc2,2.2);sun.position.set(-25,40,20);sun.castShadow=true;sun.shadow.mapSize.set(1024,1024);scene.add(sun);
-const material=c=>new THREE.MeshStandardMaterial({color:c,roughness:.9});
-function height(x,z){return Math.max(-.2,1.2*Math.sin(x*.095)*Math.cos(z*.08)+.6*Math.sin(z*.17+x*.08))}
-let water=new THREE.Mesh(new THREE.CircleGeometry(100,80),new THREE.MeshStandardMaterial({color:0x1686a4,roughness:.35}));water.rotation.x=-Math.PI/2;water.position.y=-1;scene.add(water);
-let geo=new THREE.PlaneGeometry(78,78,90,90);geo.rotateX(-Math.PI/2);let p=geo.attributes.position;for(let i=0;i<p.count;i++)p.setY(i,height(p.getX(i),p.getZ(i)));geo.computeVertexNormals();let land=new THREE.Mesh(geo,material(0x69a94f));land.receiveShadow=true;scene.add(land);
-const wood=material(0x80502c),green=material(0x237b55),green2=material(0x39975c),stone=material(0x788b91);
-function tree(x,z,s){let y=height(x,z),tr=new THREE.Mesh(new THREE.CylinderGeometry(.16*s,.24*s,1.7*s,7),wood);tr.position.set(x,y+.85*s,z);tr.castShadow=true;scene.add(tr);for(let j=0;j<3;j++){let c=new THREE.Mesh(new THREE.ConeGeometry((1-j*.12)*s,1.7*s,7),j===1?green2:green);c.position.set(x,y+(1.8+j*.5)*s,z);c.castShadow=true;scene.add(c)}}
-for(let i=0;i<75;i++){let a=Math.random()*6.28,r=8+Math.random()*28,x=Math.cos(a)*r,z=Math.sin(a)*r;tree(x,z,.65+Math.random()*.65)}
-for(let i=0;i<22;i++){let a=Math.random()*6.28,r=7+Math.random()*29,x=Math.cos(a)*r,z=Math.sin(a)*r;let o=new THREE.Mesh(new THREE.DodecahedronGeometry(.5+Math.random()*.7),stone);o.position.set(x,height(x,z)+.35,z);o.scale.y=.7;o.castShadow=true;scene.add(o)}
-let player=new THREE.Group();scene.add(player);let body=new THREE.Mesh(new THREE.CapsuleGeometry(.43,.75,4,8),material(0x2563eb));body.position.y=1.1;body.castShadow=true;player.add(body);let head=new THREE.Mesh(new THREE.SphereGeometry(.34,16,12),material(0xf2c9a5));head.position.y=1.85;player.add(head);let hair=new THREE.Mesh(new THREE.SphereGeometry(.35,12,8,0,6.28,0,1.7),material(0x30251f));hair.position.y=1.98;player.add(hair);
-let gems=[],gemMat=new THREE.MeshStandardMaterial({color:0x5ff5ff,emissive:0x12a9c7,emissiveIntensity:1.8,metalness:.3,roughness:.2});for(let i=0;i<12;i++){let a=i/12*6.28+.3,r=10+(i%3)*6,x=Math.cos(a)*r,z=Math.sin(a)*r,g=new THREE.Mesh(new THREE.OctahedronGeometry(.62),gemMat);g.position.set(x,height(x,z)+1.4,z);g.castShadow=true;scene.add(g);gems.push(g)}
-let score=0,vy=0,grounded=true,camAngle=0,move={x:0,y:0},started=false;const scoreEl=document.querySelector('#score'),msg=document.querySelector('#msg');
-function toast(t){msg.textContent=t;msg.style.opacity=1;clearTimeout(toast.timer);toast.timer=setTimeout(()=>msg.style.opacity=0,1500)}
-function jump(){if(grounded){vy=8;grounded=false}}document.querySelector('#jump').addEventListener('pointerdown',e=>{e.preventDefault();jump()});document.querySelector('#turn').addEventListener('pointerdown',e=>{e.preventDefault();camAngle+=1.05});
-let stick=document.querySelector('#stick'),knob=document.querySelector('#knob'),sid=null;function moveStick(e){let r=stick.getBoundingClientRect(),x=e.clientX-r.left-r.width/2,y=e.clientY-r.top-r.height/2,l=Math.hypot(x,y),m=40;if(l>m){x*=m/l;y*=m/l}knob.style.transform=`translate(${x}px,${y}px)`;move={x:x/m,y:y/m}}
-stick.addEventListener('pointerdown',e=>{sid=e.pointerId;stick.setPointerCapture(sid);moveStick(e)});stick.addEventListener('pointermove',e=>{if(e.pointerId===sid)moveStick(e)});function stop(e){if(e.pointerId===sid){sid=null;move={x:0,y:0};knob.style.transform='translate(0,0)'}}stick.addEventListener('pointerup',stop);stick.addEventListener('pointercancel',stop);
-let keys={};addEventListener('keydown',e=>{keys[e.key.toLowerCase()]=true;if(e.code==='Space')jump()});addEventListener('keyup',e=>keys[e.key.toLowerCase()]=false);
-let clock=new THREE.Clock();function animate(){requestAnimationFrame(animate);let dt=Math.min(clock.getDelta(),.035),t=clock.elapsedTime;gems.forEach((g,i)=>{g.rotation.y+=dt;g.position.y=height(g.position.x,g.position.z)+1.4+Math.sin(t*2+i)*.17});
-if(started){let x=move.x,z=move.y;if(keys.a||keys.arrowleft)x=-1;if(keys.d||keys.arrowright)x=1;if(keys.w||keys.arrowup)z=-1;if(keys.s||keys.arrowdown)z=1;let f=new THREE.Vector3(Math.sin(camAngle),0,Math.cos(camAngle)),r=new THREE.Vector3(f.z,0,-f.x),dir=r.multiplyScalar(x).add(f.multiplyScalar(z));if(dir.lengthSq()>.01){dir.normalize();player.position.x+=dir.x*7*dt;player.position.z+=dir.z*7*dt;player.rotation.y=Math.atan2(dir.x,dir.z)}let d=Math.hypot(player.position.x,player.position.z);if(d>35){player.position.x*=35/d;player.position.z*=35/d}vy-=19*dt;player.position.y+=vy*dt;let h=height(player.position.x,player.position.z);if(player.position.y<=h){player.position.y=h;vy=0;grounded=true}
-for(let i=gems.length-1;i>=0;i--){if(gems[i].position.distanceTo(new THREE.Vector3(player.position.x,player.position.y+1,player.position.z))<1.5){scene.remove(gems[i]);gems.splice(i,1);score++;scoreEl.textContent=`💎 ${score} / 12`;toast(score===12?'جمعت كل البلورات! 🎉':'بلورة جديدة! 💎')}}}
-let target=new THREE.Vector3(player.position.x,player.position.y+1,player.position.z),offset=new THREE.Vector3(Math.sin(camAngle)*9,5.5,Math.cos(camAngle)*9);camera.position.lerp(target.clone().add(offset),.1);camera.lookAt(target);renderer.render(scene,camera)}
-document.querySelector('#play').onclick=()=>{started=true;document.querySelector('#start').style.display='none'};addEventListener('resize',()=>{camera.aspect=innerWidth/innerHeight;camera.updateProjectionMatrix();renderer.setSize(innerWidth,innerHeight)});camera.position.set(0,7,10);camera.lookAt(0,1,0);animate();
-</script></body></html>
+import * as THREE from 'https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js';
+const scene=new THREE.Scene(); scene.background=new THREE.Color(0x8bd0ef); scene.fog=new THREE.Fog(0x8bd0ef,65,190);
+const camera=new THREE.PerspectiveCamera(65,innerWidth/innerHeight,.1,300);
+const renderer=new THREE.WebGLRenderer({antialias:true}); renderer.setPixelRatio(Math.min(devicePixelRatio,1.6)); renderer.setSize(innerWidth,innerHeight); renderer.shadowMap.enabled=true; document.querySelector('#game').appendChild(renderer.domElement);
+scene.add(new THREE.HemisphereLight(0xffffff,0x59734b,2));
+const sun=new THREE.DirectionalLight(0xffffff,2.2); sun.position.set(-35,55,25); sun.castShadow=true; scene.add(sun);
+const mat=(c)=>new THREE.MeshStandardMaterial({color:c,roughness:.9});
+const grass=mat(0x65a84f), sand=mat(0xe8d49a), wood=mat(0x79502e), leaf=mat(0x287b45), rock=mat(0x777d80), houseMat=mat(0xe6b66d), roofMat=mat(0x9a4937), roadMat=mat(0x62696d);
+const ground=new THREE.Mesh(new THREE.CircleGeometry(95,64),grass); ground.rotation.x=-Math.PI/2; ground.receiveShadow=true; scene.add(ground);
+const beach=new THREE.Mesh(new THREE.RingGeometry(83,96,64),sand); beach.rotation.x=-Math.PI/2; beach.position.y=.03; scene.add(beach);
+const sea=new THREE.Mesh(new THREE.CircleGeometry(180,64),new THREE.MeshStandardMaterial({color:0x278dbb,roughness:.45})); sea.rotation.x=-Math.PI/2; sea.position.y=-.55; scene.add(sea);
+function box(w,h,d,m,x,y,z){let o=new THREE.Mesh(new THREE.BoxGeometry(w,h,d),m);o.position.set(x,y,z);o.castShadow=true;o.receiveShadow=true;scene.add(o);return o}
+function tree(x,z,s=1){let t=new THREE.Group();let a=new THREE.Mesh(new THREE.CylinderGeometry(.22*s,.32*s,2*s,7),wood);a.position.y=s;a.castShadow=true;t.add(a);let b=new THREE.Mesh(new THREE.ConeGeometry(1.25*s,2.8*s,7),leaf);b.position.y=2.8*s;b.castShadow=true;t.add(b);t.position.set(x,0,z);scene.add(t)}
+function house(x,z){box(7,4,6,houseMat,x,2,z);let r=new THREE.Mesh(new THREE.ConeGeometry(5.2,3,4),roofMat);r.position.set(x,5.4,z);r.rotation.y=Math.PI/4;r.castShadow=true;scene.add(r);box(1.25,2.2,.18,wood,x,1.1,z-3.08);box(1.3,1.2,.2,mat(0x8bd6e8),x-2,2.5,z-3.1)}
+// طريق ومخيم
+box(13,.12,2,roadMat,0,.08,0); box(2,.13,30,roadMat,0,.09,12);
+house(-12,-10);house(13,-18);house(22,8);house(-25,18);
+for(let i=0;i<48;i++){let ang=i*2.399,r=23+(i%7)*8,x=Math.cos(ang)*r,z=Math.sin(ang)*r;if(Math.hypot(x,z)<79)tree(x,z,.7+(i%4)*.12)}
+for(let i=0;i<18;i++){let x=(Math.random()-.5)*140,z=(Math.random()-.5)*140;if(Math.hypot(x,z)<80) {let b=new THREE.Mesh(new THREE.DodecahedronGeometry(.8+Math.random()*1.2),rock);b.position.set(x,.6,z);b.castShadow=true;scene.add(b)}}
+// لاعب
+const player=new THREE.Group();scene.add(player);
+let body=new THREE.Mesh(new THREE.CapsuleGeometry(.48,.85,4,8),mat(0x2466c2));body.position.y=1.15;body.castShadow=true;player.add(body);
+let head=new THREE.Mesh(new THREE.SphereGeometry(.38,12,10),mat(0xf0c49a));head.position.y=2;player.add(head);
+let movingCar=false,car;
+const carBody=mat(0xd94b35),glass=mat(0x9bd8e8),tire=mat(0x222222);
+car=new THREE.Group(); // create local car parts
+function carPart(g,geo,m,x,y,z){let o=new THREE.Mesh(geo,m);o.position.set(x,y,z);o.castShadow=true;g.add(o);return o}
+car.clear();carPart(car,new THREE.BoxGeometry(3.4,.8,5),carBody,0,.8,0);carPart(car,new THREE.BoxGeometry(2.4,1.1,2.5),glass,0,1.65,-.2);
+for(let x of [-1.65,1.65])for(let z of [-1.6,1.6]){let w=carPart(car,new THREE.CylinderGeometry(.48,.48,.35,12),tire,x,.48,z);w.rotation.z=Math.PI/2}
+car.position.set(5,0,4);scene.add(car);
+// بلورات
+const crystals=[];const crystalMat=new THREE.MeshStandardMaterial({color:0x47f2ff,emissive:0x087c9b,metalness:.25,roughness:.25});
+for(let i=0;i<12;i++){let a=i*2.4,r=28+(i%3)*12;let c=new THREE.Mesh(new THREE.OctahedronGeometry(.85),crystalMat);c.position.set(Math.cos(a)*r,1.2,Math.sin(a)*r);c.castShadow=true;scene.add(c);crystals.push(c)}
+// شخصيات ودّية وعلامات
+const npcMat=mat(0xe8a33b);
+for(let p of [[-18,4],[18,-28],[32,18]]){let n=new THREE.Group();let q=new THREE.Mesh(new THREE.CapsuleGeometry(.42,.8,4,8),npcMat);q.position.y=1;n.add(q);n.position.set(p[0],0,p[1]);scene.add(n)}
+const camp= new THREE.Group();let fire=new THREE.Mesh(new THREE.ConeGeometry(1,2,6),mat(0xff8a24));fire.position.y=1;camp.add(fire);camp.position.set(0,0,-34);scene.add(camp);
+let collected=0,joy={x:0,y:0},velY=0,camTurn=0;const toast=document.querySelector('#toast');
+function say(t){toast.textContent=t;toast.style.display='block';setTimeout(()=>toast.style.display='none',2100)}
+const stick=document.querySelector('#stick'),knob=document.querySelector('#knob');let pointer=null;
+stick.addEventListener('pointerdown',e=>{pointer=e.pointerId;stick.setPointerCapture(pointer);moveStick(e)});
+stick.addEventListener('pointermove',e=>{if(e.pointerId===pointer)moveStick(e)});
+function moveStick(e){let r=stick.getBoundingClientRect(),dx=e.clientX-(r.left+r.width/2),dy=e.clientY-(r.top+r.height/2),len=Math.hypot(dx,dy),max=43;if(len>max){dx=dx/len*max;dy=dy/len*max}joy.x=dx/max;joy.y=dy/max;knob.style.left=(39+dx)+'px';knob.style.top=(39+dy)+'px'}
+function release(){pointer=null;joy={x:0,y:0};knob.style.left='37px';knob.style.top='37px'}
+stick.addEventListener('pointerup',release);stick.addEventListener('pointercancel',release);
+document.querySelector('#jump').onclick=()=>{if(player.position.y<.1)velY=8};
+document.querySelector('#cam').onclick=()=>camTurn+=Math.PI/4;
+document.querySelector('#ride').onclick=()=>{if(!movingCar&&player.position.distanceTo(car.position)<5){movingCar=true;player.visible=false;say('ركبت السيارة! استخدم العصا للقيادة')}else if(movingCar){movingCar=false;player.visible=true;player.position.copy(car.position).add(new THREE.Vector3(3,0,0));say('نزلت من السيارة')}else say('اقترب من السيارة الحمراء أولاً')};
+document.querySelector('#map').onclick=()=>say(collected<12?`باقي لك ${12-collected} بلورة زرقاء`:'اتجه إلى المخيم عند علامة النار');
+let last=performance.now();
+function animate(now){requestAnimationFrame(animate);let dt=Math.min((now-last)/1000,.04);last=now;
+crystals.forEach(c=>{c.rotation.y+=dt*1.5;c.position.y=1.2+Math.sin(now*.002+c.position.x)*.2});
+let target=movingCar?car:player;let speed=movingCar?15:8;let forward=new THREE.Vector3(joy.x,0,joy.y);forward.applyAxisAngle(new THREE.Vector3(0,1,0),camTurn);if(forward.length()>1)forward.normalize();
+if(forward.length()>.05){target.position.x+=forward.x*speed*dt;target.position.z+=forward.z*speed*dt;target.rotation.y=Math.atan2(forward.x,forward.z)}
+target.position.x=THREE.MathUtils.clamp(target.position.x,-88,88);target.position.z=THREE.MathUtils.clamp(target.position.z,-88,88);
+if(!movingCar){velY-=20*dt;player.position.y=Math.max(0,player.position.y+velY*dt);if(player.position.y===0)velY=0;
+for(let i=crystals.length-1;i>=0;i--)if(player.position.distanceTo(crystals[i].position)<2.2){scene.remove(crystals[i]);crystals.splice(i,1);collected++;document.querySelector('#count').textContent=collected;if(collected===12){document.querySelector('#mission').textContent='🏕️ المهمة الأخيرة: زر المخيم عند النار!';say('جمعت كل البلورات! اذهب إلى المخيم')} }}
+if(collected===12&&player.position.distanceTo(camp.position)<5) {document.querySelector('#mission').textContent='🏆 أنهيت مغامرة الجزيرة!';}
+let focus=target.position;let offset=new THREE.Vector3(Math.sin(camTurn)*10,8,Math.cos(camTurn)*10);let desired=focus.clone().add(offset);camera.position.lerp(desired,.09);camera.lookAt(focus.x,focus.y+1,focus.z);
+renderer.render(scene,camera)}
+requestAnimationFrame(animate);
+addEventListener('resize',()=>{camera.aspect=innerWidth/innerHeight;camera.updateProjectionMatrix();renderer.setSize(innerWidth,innerHeight)});
+say('أهلاً بك! اجمع البلورات واستكشف الجزيرة');
+</script>
+</body></html>
